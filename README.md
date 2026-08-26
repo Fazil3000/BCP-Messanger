@@ -1,245 +1,469 @@
 # 🛡️ BCP Messenger
 
-### Business Continuity Plan Messenger
+## Business Continuity Plan Messenger
 
-> **An enterprise-grade event-driven microservices platform for crisis management, emergency employee safety surveys, and instant incident notifications.**
+> **Enterprise-grade Microservices Platform for Crisis Management, Emergency Employee Safety Surveys, and Instant Incident Notifications.**
 
-BCP Messenger is a **Java-based microservices application** designed to help organizations communicate with employees during emergencies such as floods, cyclones, fire emergencies, power outages, internet outages, and other incidents.
+BCP Messenger is an **event-driven microservices application** designed to help organizations communicate with employees during emergencies such as floods, cyclones, fire emergencies, power outages, internet outages, and other incidents.
 
-The platform allows administrators to create emergency campaigns, approvers to authorize them, employees to confirm their safety through surveys, and management to monitor real-time response analytics.
+The platform allows administrators to create emergency campaigns, approvers to authorize campaigns, employees to confirm their safety through surveys, and management to monitor response analytics.
+
+The system is built using **Java, Spring Boot, Spring Cloud, Apache Kafka, MySQL, React, JWT, and Docker**.
 
 ---
 
-## 📌 Project Overview
+# 📋 Table of Contents
+
+1. [Project Overview](#-project-overview)
+2. [Key Features](#-key-features)
+3. [Technology Stack](#-technology-stack)
+4. [Microservices Architecture](#-microservices-architecture)
+5. [Services and Responsibilities](#-services-and-responsibilities)
+6. [Architecture Flow](#-architecture-flow)
+7. [Why Microservices?](#-why-microservices)
+8. [API Gateway](#-api-gateway)
+9. [Eureka Service Discovery](#-eureka-service-discovery)
+10. [Config Server](#-config-server)
+11. [Apache Kafka](#-apache-kafka)
+12. [Database Architecture](#-database-architecture)
+13. [Inter-Service Communication](#-inter-service-communication)
+14. [Authentication and Security](#-authentication-and-security)
+15. [Complete Application Flow](#-complete-application-flow)
+16. [Incident Types](#-incident-types)
+17. [Prerequisites](#-prerequisites)
+18. [MySQL Setup](#-mysql-setup)
+19. [Kafka with Docker](#-kafka-with-docker)
+20. [Running the Microservices](#-running-the-microservices)
+21. [Running the React Frontend](#-running-the-react-frontend)
+22. [Application URLs](#-application-urls)
+23. [Sample Users](#-sample-users)
+24. [Postman API Testing](#-postman-api-testing)
+25. [Email Configuration](#-email-configuration)
+26. [Project Structure](#-project-structure)
+27. [Troubleshooting](#-troubleshooting)
+28. [Key Architectural Decisions](#-key-architectural-decisions)
+29. [Future Enhancements](#-future-enhancements)
+
+---
+
+# 📌 Project Overview
 
 During an emergency, organizations need to:
 
-* Notify employees immediately.
+* Immediately notify employees.
 * Confirm employee safety.
-* Identify employees who need assistance.
+* Identify employees requiring assistance.
 * Collect emergency survey responses.
-* Track organizational response status.
-* Send emergency notifications asynchronously.
-* Analyze employee responses.
+* Track employee response status.
+* Send emergency notifications.
+* Analyze safety responses.
 
 BCP Messenger solves these requirements using an **Event-Driven Microservices Architecture**.
 
-### Core Technologies
-
-* ☕ Java 17
-* 🌱 Spring Boot 3.4.2
-* ☁️ Spring Cloud 2024.0.0
-* 🚪 Spring Cloud Gateway
-* 🔎 Netflix Eureka
-* ⚙️ Spring Cloud Config Server
-* 📨 Apache Kafka
-* 🗄️ MySQL 8
-* 🔄 Flyway
-* 🔐 Spring Security + JWT
-* 🔒 BCrypt
-* ⚛️ React 18
-* ⚡ Vite
-* 📡 Axios
-* 🧪 Postman
-* 🏗️ Maven
+The application separates authentication, campaign management, notification processing, configuration, service discovery, and API routing into independent services.
 
 ---
 
-# 🏗️ Architecture
+# ✨ Key Features
+
+* 🚨 Emergency campaign management
+* 👨‍💼 Admin and Approver workflow
+* 👥 Employee management
+* 🔐 JWT authentication
+* 🔒 BCrypt password hashing
+* 🎭 Role-based authorization
+* 🌊 Multiple emergency incident types
+* 📋 Pre-stored emergency survey questions
+* 📨 Kafka-based asynchronous notifications
+* 📧 Email notification support
+* 📊 Emergency response analytics
+* 🗄️ Database-per-service architecture
+* 🔄 Flyway database migrations
+* 🔎 Eureka service discovery
+* ⚙️ Spring Cloud Config Server
+* 🚪 Spring Cloud API Gateway
+* ⚛️ React frontend
+* 🐳 Docker-based Kafka setup
+* 🧪 Postman API collection
+* 🪟 Windows startup scripts
+
+---
+
+# 🛠️ Technology Stack
+
+| Technology            | Purpose                             |
+| --------------------- | ----------------------------------- |
+| Java 17               | Backend development                 |
+| Spring Boot 3.4.2     | Microservices framework             |
+| Spring Cloud 2024.0.0 | Cloud-native microservices features |
+| Spring Cloud Gateway  | API Gateway                         |
+| Netflix Eureka        | Service Discovery                   |
+| Spring Cloud Config   | Centralized configuration           |
+| Spring Security       | Authentication and authorization    |
+| JWT                   | Stateless authentication            |
+| BCrypt                | Password hashing                    |
+| Apache Kafka          | Event-driven communication          |
+| MySQL 8               | Database                            |
+| Flyway                | Database migration                  |
+| React 18              | Frontend                            |
+| Vite                  | Frontend build tool                 |
+| Axios                 | REST API communication              |
+| Maven                 | Backend build tool                  |
+| Docker                | Kafka containerization              |
+| Postman               | API testing                         |
+| IntelliJ IDEA         | Development environment             |
+
+---
+
+# 🏗️ Microservices Architecture
+
+BCP Messenger follows a **Microservices Architecture**.
+
+Instead of creating one large monolithic application, the system is divided into independent services.
 
 ```text
-                         ┌─────────────────────────┐
-                         │     React Frontend      │
-                         │       Port 5173         │
-                         └────────────┬────────────┘
-                                      │
-                              REST / JSON + JWT
-                                      │
-                                      ▼
-                         ┌─────────────────────────┐
-                         │   Spring Cloud Gateway  │
-                         │       Port 8080         │
-                         └────────────┬────────────┘
-                                      │
-                ┌─────────────────────┼─────────────────────┐
-                │                     │                     │
-                ▼                     ▼                     ▼
-       ┌────────────────┐    ┌────────────────┐    ┌──────────────────┐
-       │  User Service  │    │  BCP Service   │    │ Notification Svc │
-       │    :8081       │    │     :8082      │    │      :8083       │
-       └───────┬────────┘    └───────┬────────┘    └────────┬─────────┘
-               │                     │                      │
-               ▼                     │                      ▼
-       ┌────────────────┐            │             ┌──────────────────┐
-       │ bcp_user_db    │            │             │bcp_notification_db│
-       └────────────────┘            │             └──────────────────┘
-                                     │
-                              CampaignCreatedEvent
-                                     │
-                                     ▼
-                            ┌──────────────────┐
-                            │  Apache Kafka    │
-                            │ Port 9092        │
-                            │                  │
-                            │ bcp.campaign.    │
-                            │ created          │
-                            └────────┬─────────┘
+                         ┌─────────────────────┐
+                         │   React Frontend    │
+                         │      :5173          │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │    API Gateway      │
+                         │      :8080          │
+                         └──────────┬──────────┘
+                                    │
+                    ┌───────────────┼────────────────┐
+                    │               │                │
+                    ▼               ▼                ▼
+             ┌─────────────┐ ┌─────────────┐ ┌─────────────────┐
+             │User Service │ │ BCP Service │ │Notification Svc │
+             │    :8081    │ │    :8082    │ │      :8083      │
+             └──────┬──────┘ └──────┬──────┘ └────────┬────────┘
+                    │               │                  │
+                    ▼               │                  ▼
+             ┌─────────────┐        │          ┌─────────────────┐
+             │bcp_user_db  │        │          │bcp_notification │
+             └─────────────┘        │          │      _db        │
+                                    │          └─────────────────┘
+                                    ▼
+                              ┌─────────────┐
+                              │    Kafka    │
+                              │    :9092    │
+                              └──────┬──────┘
                                      │
                                      ▼
-                            Notification Service
-
-                         ┌─────────────────────────┐
-                         │       bcp_db            │
-                         │ Campaigns / Surveys     │
-                         └─────────────────────────┘
+                              Notification Service
 
 
-        Supporting Infrastructure
-        ──────────────────────────
-        Eureka Server       → Port 8761
-        Config Server       → Port 8888
+       Supporting Infrastructure
+       ──────────────────────────
+       Eureka Server      :8761
+       Config Server      :8888
 ```
 
-The architecture uses **Eureka for service discovery** and **Spring Cloud Config Server for externalized configuration**.
+---
+
+# 🔧 Services and Responsibilities
+
+## 1. Eureka Server
+
+**Port:** `8761`
+
+Responsible for service discovery.
+
+All microservices register themselves with Eureka.
+
+```text
+Microservice
+     ↓
+Eureka Registry
+     ↓
+Service Discovery
+```
 
 ---
 
-# 🔧 Microservices
+## 2. Config Server
 
-| Service                | Port | Database              | Responsibility                         |
-| ---------------------- | ---: | --------------------- | -------------------------------------- |
-| `eureka-server`        | 8761 | None                  | Service discovery                      |
-| `config-server`        | 8888 | None                  | Centralized configuration              |
-| `api-gateway`          | 8080 | None                  | Single entry point and routing         |
-| `user-service`         | 8081 | `bcp_user_db`         | Authentication and employee management |
-| `bcp-service`          | 8082 | `bcp_db`              | Campaigns, surveys and analytics       |
-| `notification-service` | 8083 | `bcp_notification_db` | Kafka consumer and email notifications |
-| `bcp-frontend`         | 5173 | Browser               | React user interface                   |
+**Port:** `8888`
 
-The backend consists of six Spring Boot services, with the React frontend acting as the client application.
+Provides centralized configuration for the microservices.
+
+Configuration can include:
+
+* Kafka configuration
+* JWT configuration
+* Database properties
+* Email configuration
+* Environment-specific settings
 
 ---
 
-# 🔐 Authentication
+## 3. API Gateway
 
-The project uses:
+**Port:** `8080`
 
-* Spring Security
+Acts as the single entry point for the frontend.
+
+```text
+React
+  ↓
+API Gateway
+  ↓
+Required Microservice
+```
+
+Responsibilities:
+
+* Request routing
+* Service discovery
+* CORS management
+* Centralized gateway configuration
+* Forwarding requests to backend services
+
+The frontend does not directly call ports `8081`, `8082`, or `8083`.
+
+---
+
+## 4. User Service
+
+**Port:** `8081`
+
+Responsible for:
+
+* User management
+* Employee management
+* Login
 * JWT authentication
 * BCrypt password hashing
-* Role-based authorization
+* Role-based access
 
-### Supported Roles
+Database:
 
-| Role       | Responsibility                           |
-| ---------- | ---------------------------------------- |
-| `ADMIN`    | Create campaigns and view analytics      |
-| `APPROVER` | Review and approve emergency campaigns   |
-| `EMPLOYEE` | Receive alerts and submit safety surveys |
+```text
+bcp_user_db
+```
 
-JWT tokens contain information such as the user's email, role, and employee ID.
+---
+
+## 5. BCP Service
+
+**Port:** `8082`
+
+This is the core business service.
+
+Responsible for:
+
+* Emergency campaign creation
+* Campaign approval
+* Incident management
+* Survey questions
+* Survey submission
+* Survey responses
+* Safety analytics
+* Publishing Kafka events
+
+Database:
+
+```text
+bcp_db
+```
+
+---
+
+## 6. Notification Service
+
+**Port:** `8083`
+
+Responsible for:
+
+* Consuming Kafka events
+* Emergency email generation
+* Sending/simulating emails
+* Survey URL generation
+* Notification history
+* Delivery logs
+
+Database:
+
+```text
+bcp_notification_db
+```
+
+---
+
+# 🔄 Architecture Flow
+
+```text
+React Frontend
+      │
+      ▼
+API Gateway
+      │
+      ▼
+Eureka Service Discovery
+      │
+      ├──────────────► User Service
+      │
+      └──────────────► BCP Service
+                              │
+                              │ CampaignCreatedEvent
+                              ▼
+                         Apache Kafka
+                              │
+                              ▼
+                     Notification Service
+                              │
+                              ▼
+                       Email Notification
+```
+
+---
+
+# 🤔 Why Microservices?
+
+Microservices were selected because different parts of the application have different responsibilities and workload requirements.
+
+### Independent Scaling
+
+During an emergency, notification traffic can increase significantly.
+
+The Notification Service can be scaled independently.
+
+### Fault Isolation
+
+If the email service has an issue, the User Service and BCP Service can continue operating.
+
+### Independent Deployment
+
+Each service can be built, tested, deployed, and maintained independently.
+
+### Loose Coupling
+
+Services communicate using REST APIs and Kafka events rather than directly depending on each other's internal implementation.
+
+### Clear Responsibilities
+
+```text
+User Service          → Authentication & Users
+
+BCP Service           → Campaigns & Surveys
+
+Notification Service  → Notifications
+
+API Gateway           → Routing
+
+Eureka                → Service Discovery
+
+Config Server         → Configuration
+```
 
 ---
 
 # 🚪 API Gateway
 
-The React frontend communicates only with the **API Gateway on port 8080**.
+The API Gateway provides a single entry point.
+
+Without the gateway:
+
+```text
+React
+ ├── User Service :8081
+ ├── BCP Service :8082
+ └── Notification Service :8083
+```
+
+With the gateway:
 
 ```text
 React
   ↓
 API Gateway :8080
   ↓
-Eureka
-  ↓
-Required Microservice
+Required Service
 ```
 
-### Why API Gateway?
+Benefits:
 
-* Provides a single entry point.
-* Hides internal service ports.
-* Provides centralized routing.
-* Supports dynamic service discovery.
-* Handles common cross-cutting concerns.
-* Prevents frontend code from directly depending on individual microservice ports.
-
-The gateway uses Spring Cloud Gateway with WebFlux and routes services through logical discovery addresses such as `lb://USER-SERVICE` and `lb://BCP-SERVICE`.
+* Single entry point
+* Hides internal service ports
+* Centralized routing
+* Dynamic service discovery
+* Centralized CORS
+* Easier frontend integration
 
 ---
 
 # 🔎 Eureka Service Discovery
 
-Eureka acts as the central service registry.
+Eureka acts as the service registry.
 
-When a microservice starts:
+When a service starts:
 
 ```text
-Microservice
+User Service
      ↓
 Registers with Eureka
      ↓
 Eureka Registry
-     ↓
-Gateway discovers service
 ```
 
-Instead of hardcoding service IP addresses and ports, services are discovered dynamically through Eureka.
+The Gateway can then discover the service dynamically.
 
-This makes the architecture more suitable for environments where service instances may change or scale.
+Example:
+
+```text
+lb://USER-SERVICE
+lb://BCP-SERVICE
+lb://NOTIFICATION-SERVICE
+```
+
+This avoids hardcoding service IP addresses.
 
 ---
 
 # ⚙️ Config Server
 
-Spring Cloud Config Server provides centralized external configuration.
+Spring Cloud Config Server provides externalized configuration.
 
-Configuration includes items such as:
+The project uses the **native configuration profile** for local development.
 
-* Kafka topics
-* JWT configuration
-* SMTP settings
-* Service-specific properties
-
-The project uses the **native Config Server profile** for local development.
+This allows configuration to be managed separately from application code.
 
 ---
 
 # 📨 Apache Kafka
 
-Kafka is used for **asynchronous notification processing**.
+Kafka provides asynchronous communication between the BCP Service and Notification Service.
 
-When an approver approves an emergency campaign:
+## Kafka Flow
 
 ```text
-Approver
-   ↓
 BCP Service
-   ↓
-CampaignCreatedEvent
-   ↓
+     │
+     │ Publish CampaignCreatedEvent
+     ▼
 Kafka Topic
 bcp.campaign.created
-   ↓
+     │
+     ▼
 Notification Service
-   ↓
+     │
+     ▼
 Email Notification
 ```
 
-### Why Kafka?
-
-If the BCP Service directly sent hundreds or thousands of emails synchronously, the request could become slow and eventually timeout.
-
-Kafka provides:
+## Why Kafka?
 
 * Asynchronous processing
-* Decoupling between services
-* Persistent event storage
-* Consumer groups
+* Decoupling
 * Fault tolerance
+* Persistent events
+* Consumer groups
 * Scalable notification processing
 
-The Notification Service consumes events using the consumer group:
+The Kafka consumer group is:
 
 ```text
 bcp-notification-group
@@ -249,7 +473,7 @@ bcp-notification-group
 
 # 🗄️ Database Architecture
 
-The project follows the **Database-per-Service** pattern.
+The application follows the **Database-per-Service** pattern.
 
 ```text
 User Service
@@ -265,26 +489,15 @@ Notification Service
 bcp_notification_db
 ```
 
-### Database Tables
+Each service owns its database.
 
-#### `bcp_user_db`
+### User Database
 
 ```text
 users
 ```
 
-Stores:
-
-* User ID
-* Employee ID
-* Name
-* Email
-* Password
-* Department
-* Role
-* Active status
-
-#### `bcp_db`
+### BCP Database
 
 ```text
 campaigns
@@ -293,39 +506,13 @@ survey_responses
 survey_answers
 ```
 
-#### `bcp_notification_db`
+### Notification Database
 
 ```text
 notification_logs
 ```
 
-This separation prevents services from directly depending on another service's database schema.
-
----
-
-# 🔄 Flyway Database Migration
-
-Flyway is used for database version management.
-
-Instead of allowing Hibernate to automatically modify the database schema, the project uses:
-
-```properties
-spring.jpa.hibernate.ddl-auto=validate
-```
-
-Database changes are managed through versioned SQL migration files such as:
-
-```text
-V1__init_*.sql
-V2__*.sql
-```
-
-This makes database changes:
-
-* Version controlled
-* Reproducible
-* Predictable
-* Suitable for CI/CD environments
+This provides database isolation and prevents direct database coupling between services.
 
 ---
 
@@ -333,7 +520,7 @@ This makes database changes:
 
 The project uses two communication mechanisms.
 
-## 1. Synchronous REST
+## Synchronous REST
 
 Used when an immediate response is required.
 
@@ -348,69 +535,99 @@ User Service / BCP Service
 Examples:
 
 * Login
-* Fetch survey questions
-* Submit surveys
+* Fetch questions
+* Submit survey
 * View analytics
 
-## 2. Asynchronous Kafka
+## Asynchronous Kafka
 
 Used for background processing.
 
 ```text
 BCP Service
-     ↓
+    ↓
 Kafka
-     ↓
+    ↓
 Notification Service
 ```
 
-Used for:
+Used for emergency notification dispatch.
 
-* Emergency notification dispatch
-* Campaign-created events
+---
+
+# 🔐 Authentication and Security
+
+The project uses:
+
+### JWT
+
+JWT provides stateless authentication.
+
+```text
+Login
+  ↓
+User Service
+  ↓
+JWT Token
+  ↓
+Frontend
+```
+
+### BCrypt
+
+Passwords are stored using BCrypt hashing instead of plain text.
+
+### Roles
+
+```text
+ADMIN
+APPROVER
+EMPLOYEE
+```
 
 ---
 
 # 🔄 Complete Application Flow
 
-## Step 1 — User Login
+## 1. Login
 
 ```text
-React Login Form
-       ↓
+React
+ ↓
 POST /api/auth/login
-       ↓
+ ↓
 API Gateway :8080
-       ↓
+ ↓
 User Service :8081
-       ↓
-BCrypt Password Validation
-       ↓
-JWT Token
-       ↓
-React LocalStorage
+ ↓
+Validate BCrypt Password
+ ↓
+Generate JWT
+ ↓
+React stores JWT
 ```
 
 ---
 
-## Step 2 — Create Emergency Campaign
+## 2. Create Emergency Campaign
 
-Admin selects an incident type:
+Admin selects an incident type.
+
+Example:
 
 ```text
 FLOOD
-CYCLONE
-POWER_OUTAGE
-INTERNET_OUTAGE
-FIRE_EMERGENCY
-OTHER
 ```
 
-The frontend retrieves the corresponding questions from the BCP Service.
+Frontend requests the corresponding questions:
 
-The administrator then creates the emergency campaign.
+```http
+GET /api/bcp/questions/FLOOD
+```
 
-Initial status:
+Admin enters the campaign title and message.
+
+Campaign is created with:
 
 ```text
 PENDING_APPROVAL
@@ -418,45 +635,48 @@ PENDING_APPROVAL
 
 ---
 
-## Step 3 — Approve Campaign
+## 3. Approve Campaign
 
-The Approver reviews the campaign and selects:
+Approver reviews the campaign.
 
-```text
-Approve & Send
+```http
+PUT /api/bcp/campaigns/{id}/approve
 ```
 
 The BCP Service:
 
-1. Updates campaign status.
-2. Creates a `CampaignCreatedEvent`.
-3. Publishes the event to Kafka.
+1. Approves the campaign.
+2. Updates the campaign status.
+3. Publishes `CampaignCreatedEvent`.
+4. Sends the event to Kafka.
 
 ---
 
-## Step 4 — Notification Processing
+## 4. Kafka Notification Processing
 
-Notification Service consumes the Kafka event.
+```text
+BCP Service
+      ↓
+CampaignCreatedEvent
+      ↓
+Kafka
+      ↓
+Notification Service
+```
 
-It:
-
-1. Receives the campaign event.
-2. Generates the emergency email.
-3. Adds the employee survey URL.
-4. Sends the email or simulates it in offline mode.
-5. Stores notification history.
+Notification Service consumes the event and generates the emergency email.
 
 ---
 
-## Step 5 — Employee Survey
+## 5. Employee Survey
 
-Employee opens the survey URL:
+Employee receives the notification and opens:
 
 ```text
 /survey/{surveyToken}
 ```
 
-The employee answers the emergency questions.
+Employee answers the questions.
 
 Example:
 
@@ -464,150 +684,138 @@ Example:
 Are you safe?                     YES
 Do you need assistance?           NO
 Can you work from home?           YES
-Need accommodation?               NO
-Need transportation?              NO
+Need temporary accommodation?     NO
+Need transportation assistance?  NO
 ```
 
-The BCP Service stores the response in MySQL.
+The response is stored in MySQL.
 
-If an assistance-related question is answered **YES**, the system marks the employee as requiring assistance.
+If an assistance-related question is answered `YES`, the system flags the employee as requiring assistance.
 
 ---
 
-## Step 6 — Analytics
+## 6. Analytics
 
-Administrators and Approvers can view:
+Admin/Approver opens the analytics dashboard.
+
+The system displays:
 
 * Safety percentage
-* YES vs NO responses
-* Employee response statistics
-* Employees requiring urgent assistance
-
-The analytics endpoint is:
-
-```http
-GET /api/bcp/campaigns/{id}/analytics
-```
-
-The complete request lifecycle is documented in the project source.
+* YES/NO response statistics
+* Employee responses
+* Employees requiring assistance
 
 ---
 
 # 🚨 Supported Incident Types
 
-### 🌊 Flood
+The system contains pre-stored questions for:
 
-Safety, assistance, work-from-home, accommodation and transportation questions.
+### 🌊 FLOOD
 
-### 🌀 Cyclone
+Safety, assistance, work-from-home, accommodation and transportation.
 
-Employee and family safety, emergency assistance and work-from-home questions.
+### 🌐 INTERNET_OUTAGE
 
-### ⚡ Power Outage
+Internet connectivity and alternate work location.
 
-Electricity availability and alternate workplace questions.
+### ⚡ POWER_OUTAGE
 
-### 🌐 Internet Outage
+Electricity availability and alternate workplace.
 
-Connectivity and alternate location questions.
+### 🌀 CYCLONE
 
-### 🔥 Fire Emergency
+Employee/family safety, assistance and work-from-home.
 
-Evacuation, medical assistance and emergency shelter questions.
+### 🔥 FIRE_EMERGENCY
 
-### ⚠️ Other
+Evacuation, medical assistance and emergency shelter.
 
-General safety, assistance and work capability questions.
+### ⚠️ OTHER
 
----
-
-# 📋 Sample Users
-
-| Email                   | Password       | Role     |
-| ----------------------- | -------------- | -------- |
-| `admin@company.com`     | `Admin@123`    | ADMIN    |
-| `approver@company.com`  | `Approver@123` | APPROVER |
-| `employee1@company.com` | `Employee@123` | EMPLOYEE |
-| `employee2@company.com` | `Employee@123` | EMPLOYEE |
-| `employee3@company.com` | `Employee@123` | EMPLOYEE |
-
-These accounts are pre-seeded through Flyway.
-
-> ⚠️ These credentials are for local/demo purposes only. Do not use them in production.
+General safety, assistance and work capability.
 
 ---
 
-# 🛠️ Prerequisites
+# 💻 Prerequisites
 
-Install the following:
+Install the following software before running the project.
 
-```text
-Java JDK 17
-Node.js 18+
-MySQL 8.x
-Apache Kafka 3.x
-Maven 3.8+
+| Software       | Version                      |
+| -------------- | ---------------------------- |
+| Java JDK       | 17                           |
+| Maven          | 3.8+                         |
+| Node.js        | 18+                          |
+| npm            | Included with Node.js        |
+| MySQL          | 8.x                          |
+| Docker Desktop | Latest                       |
+| Docker Compose | Included with Docker Desktop |
+| Git            | Latest                       |
+| IntelliJ IDEA  | Recommended                  |
+| Postman        | Recommended                  |
+
+---
+
+# 🐳 Docker Desktop
+
+Docker Desktop is required because **Apache Kafka is run using Docker**.
+
+Verify Docker:
+
+```bash
+docker --version
 ```
 
-Required ports:
+Verify Docker Compose:
 
-| Component            | Port |
-| -------------------- | ---: |
-| Eureka               | 8761 |
-| Config Server        | 8888 |
-| API Gateway          | 8080 |
-| User Service         | 8081 |
-| BCP Service          | 8082 |
-| Notification Service | 8083 |
-| Kafka                | 9092 |
-| React Frontend       | 5173 |
-| MySQL                | 3306 |
+```bash
+docker compose version
+```
+
+Make sure Docker Desktop is running before starting Kafka.
 
 ---
 
 # 🗄️ MySQL Setup
 
-Run the database setup script:
+Make sure MySQL Server is running on:
+
+```text
+localhost:3306
+```
+
+Create the databases using:
 
 ```bash
 mysql -u root -p < scripts/setup-databases.sql
 ```
 
-Or create the databases manually:
+The following databases are required:
 
-```sql
-CREATE DATABASE IF NOT EXISTS bcp_user_db
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
-CREATE DATABASE IF NOT EXISTS bcp_db
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-
-CREATE DATABASE IF NOT EXISTS bcp_notification_db
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
+```text
+bcp_user_db
+bcp_db
+bcp_notification_db
 ```
+
+Flyway will create and migrate the required tables when the services start.
 
 ---
 
-# 📨 Kafka Setup
+# 🐳 Kafka Setup Using Docker
 
-The project uses Kafka in **KRaft mode**, so ZooKeeper is not required.
+Kafka is run through Docker instead of installing Kafka directly on Windows.
 
-Example Windows setup:
+From the project root:
 
-```powershell
-cd C:\kafka
+```bash
+docker compose up -d
+```
 
-$CLUSTER_ID = .\bin\windows\kafka-storage.bat random-uuid
+Check the running containers:
 
-.\bin\windows\kafka-storage.bat format `
--t $CLUSTER_ID `
--c .\config\kraft\server.properties
-
-.\bin\windows\kafka-server-start.bat `
-.\config\kraft\server.properties
+```bash
+docker ps
 ```
 
 Kafka should be available on:
@@ -616,75 +824,153 @@ Kafka should be available on:
 localhost:9092
 ```
 
+View Kafka logs:
+
+```bash
+docker compose logs -f kafka
+```
+
+Stop Kafka:
+
+```bash
+docker compose stop
+```
+
+Start Kafka again:
+
+```bash
+docker compose start
+```
+
+Stop and remove containers:
+
+```bash
+docker compose down
+```
+
+> Make sure Kafka is running before starting the BCP Service and Notification Service.
+
 ---
 
-# ▶️ Running the Backend
+# ▶️ Running the Microservices
 
-Start services in this order.
+Start the services in the following order.
 
-### 1. Eureka Server
+## 1. Eureka Server
 
-```cmd
-cd backend\eureka-server
+```bash
+cd backend/eureka-server
 mvn spring-boot:run
 ```
 
-Open:
+Port:
+
+```text
+8761
+```
+
+Verify:
 
 ```text
 http://localhost:8761
 ```
 
-### 2. Config Server
+---
 
-```cmd
-cd backend\config-server
+## 2. Config Server
+
+```bash
+cd backend/config-server
 mvn spring-boot:run
 ```
 
-### 3. User Service
+Port:
 
-```cmd
-cd backend\user-service
-mvn spring-boot:run
-```
-
-### 4. BCP Service
-
-```cmd
-cd backend\bcp-service
-mvn spring-boot:run
-```
-
-### 5. Notification Service
-
-```cmd
-cd backend\notification-service
-mvn spring-boot:run
-```
-
-### 6. API Gateway
-
-```cmd
-cd backend\api-gateway
-mvn spring-boot:run
-```
-
-Alternatively, on Windows:
-
-```cmd
-scripts\start-all-services.bat
+```text
+8888
 ```
 
 ---
 
-# ⚛️ Running the Frontend
+## 3. User Service
+
+```bash
+cd backend/user-service
+mvn spring-boot:run
+```
+
+Port:
+
+```text
+8081
+```
+
+---
+
+## 4. BCP Service
+
+```bash
+cd backend/bcp-service
+mvn spring-boot:run
+```
+
+Port:
+
+```text
+8082
+```
+
+---
+
+## 5. Notification Service
+
+```bash
+cd backend/notification-service
+mvn spring-boot:run
+```
+
+Port:
+
+```text
+8083
+```
+
+This service connects to Kafka as a consumer.
+
+---
+
+## 6. API Gateway
+
+```bash
+cd backend/api-gateway
+mvn spring-boot:run
+```
+
+Port:
+
+```text
+8080
+```
+
+---
+
+# ⚛️ Running the React Frontend
+
+Open a terminal inside the frontend directory:
 
 ```bash
 cd frontend
+```
 
+Install dependencies:
+
+```bash
 npm install
+```
 
+Start the application:
+
+```bash
 npm run dev
 ```
 
@@ -696,15 +982,75 @@ http://localhost:5173
 
 ---
 
+# 🚀 Complete Startup Order
+
+The recommended startup sequence is:
+
+```text
+1. Docker Desktop
+        ↓
+2. Kafka Container
+        ↓
+3. MySQL
+        ↓
+4. Eureka Server :8761
+        ↓
+5. Config Server :8888
+        ↓
+6. User Service :8081
+        ↓
+7. BCP Service :8082
+        ↓
+8. Notification Service :8083
+        ↓
+9. API Gateway :8080
+        ↓
+10. React Frontend :5173
+```
+
+---
+
+# 🌐 Application URLs
+
+| Component            | URL                   |
+| -------------------- | --------------------- |
+| React Frontend       | http://localhost:5173 |
+| API Gateway          | http://localhost:8080 |
+| Eureka Dashboard     | http://localhost:8761 |
+| Config Server        | http://localhost:8888 |
+| User Service         | http://localhost:8081 |
+| BCP Service          | http://localhost:8082 |
+| Notification Service | http://localhost:8083 |
+| Kafka                | localhost:9092        |
+| MySQL                | localhost:3306        |
+
+---
+
+# 👥 Sample Users
+
+The project contains pre-seeded test users.
+
+| Email                   | Password       | Role     | Employee ID |
+| ----------------------- | -------------- | -------- | ----------- |
+| `admin@company.com`     | `Admin@123`    | ADMIN    | EMP001      |
+| `approver@company.com`  | `Approver@123` | APPROVER | EMP002      |
+| `employee1@company.com` | `Employee@123` | EMPLOYEE | EMP003      |
+| `employee2@company.com` | `Employee@123` | EMPLOYEE | EMP004      |
+| `employee3@company.com` | `Employee@123` | EMPLOYEE | EMP005      |
+
+> ⚠️ These credentials are for local development/testing only.
+
+---
+
 # 🧪 Postman API Testing
 
-Import:
+Import the Postman collection:
 
 ```text
 postman/BCP_Messenger_API_Collection.json
 ```
 
-### Login
+## Login
 
 ```http
 POST http://localhost:8080/api/auth/login
@@ -717,13 +1063,17 @@ POST http://localhost:8080/api/auth/login
 }
 ```
 
-### Get Questions
+---
+
+## Get Incident Questions
 
 ```http
 GET http://localhost:8080/api/bcp/questions/FLOOD
 ```
 
-### Create Campaign
+---
+
+## Create Campaign
 
 ```http
 POST http://localhost:8080/api/bcp/campaigns
@@ -737,19 +1087,48 @@ POST http://localhost:8080/api/bcp/campaigns
 }
 ```
 
-### Approve Campaign
+---
+
+## Approve Campaign
 
 ```http
 PUT http://localhost:8080/api/bcp/campaigns/1/approve
 ```
 
-### Submit Survey
+This approval triggers the Kafka notification flow.
+
+---
+
+## Submit Survey
 
 ```http
 POST http://localhost:8080/api/bcp/surveys/{surveyToken}/submit
 ```
 
-### View Analytics
+Example:
+
+```json
+{
+  "employeeEmail": "employee1@company.com",
+  "employeeName": "John Doe",
+  "employeeId": "EMP003",
+  "comments": "Safe at home, no assistance needed.",
+  "answers": [
+    {
+      "questionId": 1,
+      "answer": "YES"
+    },
+    {
+      "questionId": 2,
+      "answer": "NO"
+    }
+  ]
+}
+```
+
+---
+
+## View Analytics
 
 ```http
 GET http://localhost:8080/api/bcp/campaigns/1/analytics
@@ -759,7 +1138,9 @@ GET http://localhost:8080/api/bcp/campaigns/1/analytics
 
 # 📧 Email Configuration
 
-By default, the application runs in **offline email mode**.
+The Notification Service supports offline mode.
+
+By default:
 
 ```properties
 app.email.enabled=false
@@ -768,10 +1149,10 @@ app.email.enabled=false
 In offline mode:
 
 * Emails are not actually sent.
-* Formatted emails are logged to the console.
+* Email content is printed in the console.
 * Notification records are stored as `SIMULATED`.
 
-To enable SMTP:
+For actual SMTP delivery:
 
 ```text
 APP_EMAIL_ENABLED=true
@@ -779,82 +1160,65 @@ MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 ```
 
----
-
-# 🔐 Security Features
-
-The project implements:
-
-* JWT-based authentication
-* BCrypt password hashing
-* Role-based authorization
-* Stateless authentication
-* Database isolation
-* Externalized configuration
-* Service discovery
-* Asynchronous event processing
+> Never commit real email passwords, API keys, JWT secrets, or other credentials to GitHub.
 
 ---
 
-# 🧩 Key Design Decisions
-
-### Why Microservices?
-
-Allows independent scaling, fault isolation and separate deployment of business capabilities.
-
-### Why API Gateway?
-
-Provides one external entry point and hides internal microservice topology.
-
-### Why Eureka?
-
-Allows dynamic service discovery without hardcoded service locations.
-
-### Why Kafka?
-
-Provides asynchronous, durable and scalable notification processing.
-
-### Why Database-per-Service?
-
-Maintains strong service boundaries and prevents direct database coupling.
-
-### Why JWT?
-
-Provides stateless authentication suitable for distributed microservices.
-
-### Why BCrypt?
-
-Provides salted and adaptive password hashing.
-
-### Why Flyway?
-
-Provides version-controlled and reproducible database migrations.
-
----
-
-# 🔄 Communication Architecture
+# 🔄 Project Request Flow
 
 ```text
-                 SYNCHRONOUS
-React ───────► API Gateway
-                 │
-                 ├────► User Service
-                 │
-                 └────► BCP Service
+                    USER LOGIN
+                       │
+                       ▼
+                 React Frontend
+                       │
+                       ▼
+                API Gateway :8080
+                       │
+                       ▼
+                User Service :8081
+                       │
+                       ▼
+                    JWT Token
+                       │
+                       ▼
+                  User Logged In
 
 
-                 ASYNCHRONOUS
-BCP Service
-     │
-     │ CampaignCreatedEvent
-     ▼
-  Kafka
-     │
-     ▼
-Notification Service
-     │
-     ▼
-Email / Notification
+                 CREATE CAMPAIGN
+                       │
+                       ▼
+                BCP Service :8082
+                       │
+                       ▼
+                PENDING_APPROVAL
+                       │
+                       ▼
+                 Approver Approval
+                       │
+                       ▼
+                CampaignCreatedEvent
+                       │
+                       ▼
+                  Apache Kafka
+                       │
+                       ▼
+            Notification Service :8083
+                       │
+                       ▼
+                 Email / Simulation
+                       │
+                       ▼
+                  Employee Survey
+                       │
+                       ▼
+                BCP Service :8082
+                       │
+                       ▼
+                   MySQL
+                       │
+                       ▼
+                   Analytics
 ```
 
 ---
@@ -882,12 +1246,14 @@ BCP-Messenger/
 │
 ├── scripts/
 │   ├── setup-databases.sql
-│   ├── start-kafka-kraft.bat
 │   ├── start-all-services.bat
-│   └── stop-all-services.bat
+│   ├── stop-all-services.bat
+│   └── ...
 │
 ├── postman/
 │   └── BCP_Messenger_API_Collection.json
+│
+├── docker-compose.yml
 │
 └── README.md
 ```
@@ -896,145 +1262,253 @@ BCP-Messenger/
 
 # 🧯 Troubleshooting
 
-### Port already in use
+## Port Already in Use
 
-Run:
+If a service shows:
+
+```text
+Address already in use: bind
+```
+
+Stop the running services or use:
 
 ```cmd
 scripts\stop-all-services.bat
 ```
 
-### Kafka connection refused
+---
 
-Make sure Kafka is running:
+## Kafka Connection Refused
+
+If you see:
+
+```text
+Connection to node -1 could not be established
+```
+
+Check:
+
+```bash
+docker ps
+```
+
+Make sure the Kafka container is running.
+
+Also verify:
 
 ```text
 localhost:9092
 ```
 
-before starting:
+---
+
+## MySQL Connection Error
+
+Make sure:
 
 ```text
-bcp-service
-notification-service
+MySQL Server → Running
+Host → localhost
+Port → 3306
 ```
 
-### Database access denied
-
-Verify:
-
-```text
-MySQL → localhost:3306
-Username → root
-Password → configured password
-```
+Also verify the configured username and password.
 
 ---
 
-# 🎓 Architecture Highlights
+## Service Not Found Through Gateway
 
-This project demonstrates practical implementation of:
+Check the Eureka dashboard:
 
-* Microservices Architecture
-* Event-Driven Architecture
-* Service Discovery
-* API Gateway Pattern
-* Database-per-Service Pattern
-* Asynchronous Messaging
-* JWT Authentication
-* Role-Based Authorization
-* Database Migration
-* Reactive Gateway
-* Fault Isolation
-* Decoupled Services
-* REST API Communication
-* Kafka Producer/Consumer
-* React Frontend Integration
+```text
+http://localhost:8761
+```
+
+Verify that:
+
+```text
+USER-SERVICE
+BCP-SERVICE
+NOTIFICATION-SERVICE
+```
+
+are registered.
 
 ---
 
-# 📊 Technology Architecture
+# 🧠 Key Architectural Decisions
+
+| Decision             | Reason                                             |
+| -------------------- | -------------------------------------------------- |
+| Microservices        | Independent scaling and fault isolation            |
+| API Gateway          | Single entry point and centralized routing         |
+| Eureka               | Dynamic service discovery                          |
+| Config Server        | Centralized external configuration                 |
+| Kafka                | Asynchronous notification processing               |
+| REST                 | Immediate request/response operations              |
+| Database-per-Service | Data isolation and loose coupling                  |
+| JWT                  | Stateless authentication                           |
+| BCrypt               | Secure password hashing                            |
+| Flyway               | Version-controlled database migrations             |
+| Docker               | Simplified Kafka setup and environment consistency |
+| React                | Responsive frontend application                    |
+
+---
+
+# 🎯 Why REST and Kafka Both?
+
+REST and Kafka solve different problems.
+
+### REST
+
+Used when the caller needs an immediate response.
 
 ```text
-Frontend
-   │
-   └── React + Vite + Axios
-             │
-             ▼
-API Gateway
-   │
-   ├── Spring Cloud Gateway
-   └── WebFlux
-             │
-             ▼
-Service Discovery
-   │
-   └── Eureka
-             │
-      ┌──────┴─────────┐
-      ▼                ▼
-User Service       BCP Service
-      │                │
-      ▼                ▼
-MySQL DB             MySQL DB
-                       │
-                       ▼
-                     Kafka
-                       │
-                       ▼
-              Notification Service
-                       │
-                       ▼
-                    MySQL DB
+Login
+Fetch Questions
+Submit Survey
+View Analytics
 ```
+
+### Kafka
+
+Used for asynchronous background processing.
+
+```text
+Campaign Approved
+       ↓
+Kafka Event
+       ↓
+Notification Processing
+```
+
+This combination keeps the application responsive while allowing notification processing to happen independently.
+
+---
+
+# 📈 Scalability
+
+The architecture allows individual services to scale according to workload.
+
+For example:
+
+```text
+Normal Situation
+
+User Service       → 1 instance
+BCP Service        → 1 instance
+Notification       → 1 instance
+```
+
+During a major emergency:
+
+```text
+User Service       → 1 instance
+BCP Service        → 2 instances
+Notification       → Multiple instances
+```
+
+Additional Notification Service instances can consume Kafka messages using the same consumer group.
+
+---
+
+# 🔒 Security Considerations
+
+The project implements:
+
+* JWT authentication
+* BCrypt password hashing
+* Role-based access
+* Stateless authentication
+* Separate databases
+* Externalized configuration
+
+For production deployment:
+
+* Store secrets in environment variables or a secrets manager.
+* Do not commit passwords to Git.
+* Use HTTPS.
+* Rotate JWT secrets.
+* Use secure database credentials.
+* Restrict database/network access.
 
 ---
 
 # 🚀 Future Enhancements
 
-Potential production enhancements include:
+Possible future improvements include:
 
-* SMS and WhatsApp notification channels
-* Push notifications
-* Docker/Kubernetes deployment
-* Cloud deployment
-* Distributed tracing
-* Centralized logging
-* Prometheus/Grafana monitoring
-* API rate limiting
-* Advanced disaster recovery
-* Multi-region deployment
-* Automated CI/CD pipelines
+* 📱 SMS notifications
+* 💬 WhatsApp notifications
+* 🔔 Push notifications
+* 🐳 Full Dockerization of all microservices
+* ☸️ Kubernetes deployment
+* ☁️ AWS/cloud deployment
+* 📊 Prometheus and Grafana monitoring
+* 🔍 Distributed tracing
+* 📝 Centralized logging
+* 🔄 CI/CD pipeline
+* 🌍 Multi-region deployment
+* 🛡️ Advanced disaster recovery
 
 ---
 
-# 👨‍💻 Project Status
+# ✅ Project Highlights
 
 ```text
-✅ Microservices Architecture
+✅ Java 17
+✅ Spring Boot Microservices
+✅ Spring Cloud
 ✅ API Gateway
 ✅ Eureka Service Discovery
 ✅ Config Server
+✅ Apache Kafka
+✅ Kafka Producer & Consumer
+✅ Docker-based Kafka
+✅ MySQL
+✅ Database-per-Service
+✅ Flyway
 ✅ JWT Authentication
 ✅ BCrypt Password Security
-✅ Apache Kafka Producer/Consumer
-✅ Database-per-Service
-✅ Flyway Migrations
+✅ Role-Based Authorization
+✅ React + Vite
 ✅ Emergency Campaign Management
 ✅ Employee Safety Surveys
-✅ Notification Processing
+✅ Notification Service
 ✅ Analytics Dashboard
-✅ React Frontend
-✅ Postman API Collection
-✅ Windows Startup Scripts
+✅ Postman API Testing
 ```
 
 ---
 
-# 📜 Conclusion
+# 🏁 Conclusion
 
-**BCP Messenger** demonstrates how modern microservices and event-driven architecture can be applied to a real-world business continuity and emergency communication problem.
+BCP Messenger demonstrates a real-world implementation of **Microservices Architecture and Event-Driven Architecture** for emergency business continuity management.
 
-The system separates authentication, campaign management, notification processing, and frontend responsibilities into independent components while using **REST for immediate communication** and **Kafka for asynchronous event processing**.
+The system separates authentication, campaign management, notification processing, configuration, service discovery, and API routing into independent services.
 
-This architecture provides better scalability, fault isolation, maintainability, and service independence compared with a traditional monolithic application.
+It combines:
+
+```text
+Microservices
+      +
+API Gateway
+      +
+Eureka Service Discovery
+      +
+Config Server
+      +
+REST APIs
+      +
+Apache Kafka
+      +
+Database-per-Service
+      +
+JWT Security
+      +
+React Frontend
+      +
+Docker
+```
+
+The result is a **scalable, loosely coupled, maintainable, and event-driven emergency communication platform** suitable for demonstrating enterprise microservices concepts.
